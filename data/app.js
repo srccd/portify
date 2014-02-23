@@ -4,8 +4,10 @@ var app,
 	server,
 	postField,
 	appjs = false,
+	env = process.env,
 	http = require('http'),
-	GoogleClientLogin = require('googleclientlogin').GoogleClientLogin,
+	googleapis = require('googleapis'),
+	googleapisOAuth = googleapis.OAuth2Client,
 	Spotify = require('spotify-web'),
 	events = require('events'),
 	googleMusic = require('./gmusic.js'),
@@ -34,6 +36,30 @@ if (typeof Proxy !== 'object' || typeof WeakMap !== 'function') {
 			next();
 		});
 	});
+	app.get("/generateoauth", function (req, res) {
+		var uri = getAccessToken();
+		res.redirect(301,uri);
+	});
+	app.get("/oauthcallback", function (req, res) {
+		var code = req.query.code;
+		res.cookie(
+			'token',
+			req.query.code
+			);
+		if (code) {
+			res.redirect(301, "/#/spotify/login");
+		} else {
+			res.send(
+				500,
+				{
+					error: 'Please authorize with one Google ' +
+						'account.'
+				}
+			);
+
+		}
+	});
+
 	app.use(app.router);
 
 	server.listen(3132);
@@ -465,3 +491,28 @@ if(appjs) {
 	  console.log("Window Closed");
 	});
 }
+
+function getAccessToken(oauth2Client) {
+    return function () {
+        // generate consent page url
+        var url = oauth2Client.generateAuthUrl({
+            access_type: 'offline', // will return a refresh token
+            scope: 'https://www.googleapis.com/auth/plus.me'
+        });
+        return url;
+    };
+}
+
+
+// load google plus v1 API resources and methods
+googleapis
+  .execute(function(err, client) {
+
+  var oauth2Client =
+    new googleapisOAuth(
+          env.npm_package_config_gapi_client_id,
+          env.npm_package_config_gapi_client_secret,
+          env.npm_package_config_gapi_redirect_uri
+    );
+      getAccessToken = getAccessToken(oauth2Client);
+});

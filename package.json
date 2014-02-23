@@ -4,7 +4,7 @@
   "version": "0.0.6",
   "private": true,
   "dependencies": {
-    "spotify-web": "https://github.com/mauimauer/node-spotify-web/tarball/master",
+    "spotify-web": "https://github.com/adammw/node-spotify-web/tarball/api-redesign/",
     "socket.io": "~0.9.16",
     "express": "~3.4.8",
     "superagent": "~0.16.0",

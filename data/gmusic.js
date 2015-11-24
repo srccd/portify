@@ -154,33 +154,36 @@ GoogleMusic.prototype.search = function(query, cb) {
 };
 
 GoogleMusic.prototype.search2 = function(query, cb) {
-	request
-		.post(this.baseUrl+this.servicePath+'/search')
-		.timeout(3000)
-		.set('Authorization', 'GoogleLogin auth=' + this.googleAuth.getAuthId())
-		.set('Origin', this.baseUrl)
-		.set('Cookie','SID='+this.googleAuth.getSID()+'; sjsaid='+this.sjsaid+'; xt='+this.xt)
-		.set('Content-Type', 'application/json')
-		.type('form')
-		.query({ 'u': 0, 'xt': this.xt, 'format': 'jsarray' })
-		.send('[["'+randomString(12,'abcdefghijklmnopqrstuvwxyz0123456789')+'",1],["'+query+'",2]]')
-		.end(function(err, res){
-
-			if(err) {
-				console.error("gmusic:search2(), error");
-				console.error(err);
-			}
-
-			response = res.text.replace(/(\r\n|\n|\r)/gm,"").replace(/\,\,/g, ',"",').replace(/\[\,/g, '["",').replace(/\,\]/g, ',""]').replace(/\,\,/g, ',"",');
-
-			try {
-				var parsed = JSON.parse(response);
-				if(cb)
-					cb(parsed);
-			} catch(e) {
-				console.error("gmusic:search2(), parsing failed");
-			}
-		});
+	var that = this;
+	setTimeout(function innerSearch() {
+		request
+			.post(that.baseUrl+that.servicePath+'/search')
+			.timeout(3000)
+			.set('Authorization', 'GoogleLogin auth=' + that.googleAuth.getAuthId())
+			.set('Origin', that.baseUrl)
+			.set('Cookie','SID='+that.googleAuth.getSID()+'; sjsaid='+that.sjsaid+'; xt='+that.xt)
+			.set('Content-Type', 'application/json')
+			.type('form')
+			.query({ 'u': 0, 'xt': that.xt, 'format': 'jsarray' })
+			.send('[["'+randomString(12,'abcdefghijklmnopqrstuvwxyz0123456789')+'",1],["'+query+'",2]]')
+			.end(function(err, res){
+	
+				if(err) {
+					console.error("gmusic:search2(), error");
+					console.error(err);
+				}
+				if (res) {
+				response = res.text.replace(/(\r\n|\n|\r)/gm,"").replace(/\,\,/g, ',"",').replace(/\[\,/g, '["",').replace(/\,\]/g, ',""]').replace(/\,\,/g, ',"",');
+	                        }
+				try {
+					var parsed = JSON.parse(response);
+					if(cb)
+						cb(parsed);
+				} catch(e) {
+					console.error("gmusic:search2(), parsing failed");
+				}
+			});
+	}, 3000);
 };
 
 GoogleMusic.prototype.addPlaylist = function(title, cb) {
@@ -192,7 +195,7 @@ GoogleMusic.prototype.addPlaylist = function(title, cb) {
 		.set('Content-Type', 'application/json')
 		.type('form')
 		.query({ 'u': 0, 'xt': this.xt })
-		.send('json={"title":"'+encodeURIComponent(title)+'"}')
+		.send('json={"title":"'+title+'"}')
 		.end(function(res){
 			var response = JSON.parse(res.text);
 
@@ -206,11 +209,11 @@ GoogleMusic.prototype.createPlaylist = function(title, description, isPublic, cb
 
 	var send = "";
 	if(title && description && isPublic) {
-		send = '[[null,1],['+isPublic+',"'+encodeURIComponent(title)+'","'+encodeURIComponent(description)+'",[]]]'
+		send = '[[null,1],['+isPublic+',"'+title+'","'+description+'",[]]]'
 	} else if(title && description) {
-		send = '[[null,1],[false,"'+encodeURIComponent(title)+'","'+encodeURIComponent(description)+'",[]]]'
+		send = '[[null,1],[false,"'+title+'","'+description+'",[]]]'
 	} else {
-		send = '[[null,1],[false,"'+encodeURIComponent(title)+'",null,[]]]'
+		send = '[[null,1],[false,"'+title+'",null,[]]]'
 	}
 
 	request
